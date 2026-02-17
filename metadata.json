@@ -1,0 +1,5 @@
+{
+  "name": "DataRefine AI",
+  "description": "A professional AI-driven data cleaning console for transforming messy Excel and CSV datasets through natural language commands with precise, iterative refinements.",
+  "requestFramePermissions": []
+}
