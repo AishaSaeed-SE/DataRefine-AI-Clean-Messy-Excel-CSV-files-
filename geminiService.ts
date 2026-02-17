@@ -7,11 +7,11 @@ export async function interpretCommand(
   sampleRows: DataRow[],
   headers: string[]
 ): Promise<TransformationStep> {
-  // To test hardcoding, you could replace the line below with: const apiKey = 'YOUR_KEY_HERE';
+  // Use the environment variable injected by Vite
   const apiKey = process.env.API_KEY;
   
   if (!apiKey || apiKey === 'undefined' || apiKey === '') {
-    throw new Error("API Key is missing. If you have set it in Vercel, please ensure you have 'Redeployed' the project and checked the 'Production' environment box.");
+    throw new Error("API Key is missing. Ensure API_KEY is set in Vercel Environment Variables and that you have REDEPLOYED the app.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
