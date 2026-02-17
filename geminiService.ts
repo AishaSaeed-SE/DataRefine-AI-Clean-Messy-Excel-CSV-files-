@@ -7,51 +7,59 @@ export async function interpretCommand(
   sampleRows: DataRow[],
   headers: string[]
 ): Promise<TransformationStep> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("API_KEY is not configured. Please ensure it is set in your environment variables.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const prompt = `
-    You are a expert senior data engineer. I have a dataset with these headers: ${headers.join(", ")}.
-    The user wants to perform this cleaning task: "${instruction}".
+    You are a world-class Senior Data Engineer specializing in functional programming and data cleansing.
     
-    Sample of the first few rows:
-    ${JSON.stringify(sampleRows, null, 2)}
+    DATASET CONTEXT:
+    - Headers: ${headers.join(", ")}
+    - Sample Data: ${JSON.stringify(sampleRows)}
 
-    Your task is to generate a JavaScript function body.
-    Context:
-    - The function signature is (row, index, allRows).
-    - 'row' is the current object.
-    - 'allRows' is the entire array of objects (useful for calculating averages, sums, etc.).
-    - You must return the transformed object, or 'null' to remove the row.
-    - DO NOT use external libraries. Use standard Math, String, Number methods.
-    
-    Special Requirement Handling:
-    - If the user asks for averages/stats, calculate them using 'allRows' at the start of your code block.
-    - Ensure numeric conversions handle commas, currency symbols, and text like "NAN".
-    - Always return a new object or a copy (e.g., { ...row, newProp: val }).
-    
-    Return a JSON object:
-    {
-      "type": "RENAME_COLUMN | MAP_VALUES | FILTER | EXTRACT | FORMAT | CUSTOM",
-      "description": "Short summary of logic",
-      "jsLogic": "The code inside the function. Example: const avg = ...; return { ...row, col: row.col || avg };"
-    }
+    USER REQUEST: "${instruction}"
 
-    Validation:
-    - If you are calculating an average of a column, make sure to filter out non-numeric values from allRows before dividing.
-    - Use Math.round() for integer averages if requested.
+    TASK:
+    Generate a JavaScript function body that accepts (row, index, allRows) and returns a transformed row object or null.
+    
+    CONSTRAINTS:
+    1. Use only ES6+ standard methods.
+    2. Handle edge cases (nulls, undefined, NaN, formatted currency/numbers).
+    3. Return a brand new object to avoid mutation side effects.
+    4. For filtering, return null if the row should be excluded.
+    5. Ensure the returned object keys match the original headers unless the instruction is to rename or add/remove columns.
+
+    OUTPUT FORMAT:
+    You must return a valid JSON object matching the requested schema.
   `;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-pro-preview",
     contents: prompt,
     config: {
+      systemInstruction: "You are a precise code-generation engine for data transformations. Output only valid JSON with executable, safe JavaScript logic.",
       responseMimeType: "application/json",
+      thinkingConfig: { thinkingBudget: 32768 },
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          type: { type: Type.STRING },
-          description: { type: Type.STRING },
-          jsLogic: { type: Type.STRING },
+          type: { 
+            type: Type.STRING, 
+            description: "The category of transformation (e.g., RENAME_COLUMN, FILTER, CUSTOM)" 
+          },
+          description: { 
+            type: Type.STRING, 
+            description: "A human-readable explanation of what the generated code does" 
+          },
+          jsLogic: { 
+            type: Type.STRING, 
+            description: "The JavaScript code inside the function body. Do not include function wrappers." 
+          },
         },
         required: ["type", "description", "jsLogic"],
       },
@@ -60,9 +68,15 @@ export async function interpretCommand(
 
   try {
     const jsonStr = response.text.trim();
-    return JSON.parse(jsonStr);
+    const result = JSON.parse(jsonStr);
+    
+    if (!result.jsLogic || result.jsLogic.length < 2) {
+      throw new Error("Generated logic was empty.");
+    }
+    
+    return result;
   } catch (error) {
-    console.error("Failed to parse Gemini response:", response.text);
-    throw new Error("Could not interpret command. Please try being more specific.");
+    console.error("Gemini Service Error:", error);
+    throw new Error("The AI engine failed to generate safe logic. Try rephrasing your request.");
   }
 }
