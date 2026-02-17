@@ -41,7 +41,7 @@ export async function interpretCommand(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-1.5",
       contents: prompt,
       config: {
         systemInstruction: "You are a precise code-generation engine for data transformations. Output only valid JSON with executable, safe JavaScript logic.",
