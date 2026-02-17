@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { DataRow, TransformationStep } from "./types";
 
 export async function interpretCommand(
@@ -39,7 +39,7 @@ export async function interpretCommand(
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response: GenerateContentResponse = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
       contents: prompt,
       config: {
@@ -68,8 +68,8 @@ export async function interpretCommand(
     });
 
     const text = response.text;
-    if (!text) {
-      throw new Error("The model did not return any content.");
+    if (typeof text !== "string") {
+      throw new Error("The model did not return a valid text response.");
     }
 
     const jsonStr = text.trim();
