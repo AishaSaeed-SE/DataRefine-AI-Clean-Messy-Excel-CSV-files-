@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { DataRow, TransformationStep } from "./types";
 
@@ -68,7 +67,12 @@ export async function interpretCommand(
       },
     });
 
-    const jsonStr = response.text.trim();
+    const text = response.text;
+    if (!text) {
+      throw new Error("The model did not return any content.");
+    }
+
+    const jsonStr = text.trim();
     const result = JSON.parse(jsonStr);
     
     if (!result.jsLogic || result.jsLogic.length < 2) {
