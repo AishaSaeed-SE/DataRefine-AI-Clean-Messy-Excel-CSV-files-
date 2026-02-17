@@ -8,7 +8,7 @@ export async function interpretCommand(
   headers: string[]
 ): Promise<TransformationStep> {
   // To test hardcoding, you could replace the line below with: const apiKey = 'YOUR_KEY_HERE';
-  const apiKey = process.env.API_KEY;
+  const apiKey = 'AIzaSyDvRQ287z_SV0HOLLnbHgb6XX12uiSRcVE';
   
   if (!apiKey || apiKey === 'undefined' || apiKey === '') {
     throw new Error("API Key is missing. If you have set it in Vercel, please ensure you have 'Redeployed' the project and checked the 'Production' environment box.");
