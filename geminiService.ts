@@ -7,14 +7,13 @@ export async function interpretCommand(
   sampleRows: DataRow[],
   headers: string[]
 ): Promise<TransformationStep> {
-  // Get key from environment (Vite will have replaced this during build)
+  // To test hardcoding, you could replace the line below with: const apiKey = 'YOUR_KEY_HERE';
   const apiKey = process.env.API_KEY;
   
   if (!apiKey || apiKey === 'undefined' || apiKey === '') {
-    throw new Error("Missing AI configuration. Please ensure the API_KEY environment variable is set in Vercel for this deployment environment.");
+    throw new Error("API Key is missing. If you have set it in Vercel, please ensure you have 'Redeployed' the project and checked the 'Production' environment box.");
   }
 
-  // Always create a new instance to ensure we use the correct key
   const ai = new GoogleGenAI({ apiKey });
   
   const prompt = `
@@ -79,11 +78,6 @@ export async function interpretCommand(
     return result;
   } catch (error: any) {
     console.error("Gemini Service Error:", error);
-    
-    if (error.message?.includes("API key")) {
-      throw new Error("The API key was not recognized by the AI provider. Double-check your key in the Vercel settings.");
-    }
-    
-    throw new Error(error.message || "The AI engine failed to generate safe logic. Try rephrasing your request.");
+    throw new Error(error.message || "Transformation generation failed.");
   }
 }
